@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appian MCP Compliance Demo - Hackathon</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            height: 100vh; 
+            display: flex;
+        }
+        .app-container { 
+            display: flex; 
+            width: 100%; 
+            height: 100vh; 
+            max-width: 1400px; 
+            margin: 0 auto;
+            box-shadow: 0 0 40px rgba(0,0,0,0.1);
+        }
+        .panel { 
+            flex: 1; 
+            padding: 2.5rem; 
+            overflow-y: auto;
+            position: relative;
+        }
+        .left-panel { 
+            background: white; 
+            border-right: 1px solid #e5e7eb;
+        }
+        .right-panel { background: #f9fafb; }
+        .panel-header { 
+            font-size: 1.5rem; 
+            font-weight: 700; 
+            color: #1e293b;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .header-icon { font-size: 1.75rem; }
+        .form-group { 
+            margin-bottom: 1.75rem;
+            position: relative;
+        }
+        .form-label { 
+            display: block; 
+            font-weight: 600; 
+            color: #374151; 
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        select, input[type="date"] { 
+            width: 100%; 
+            padding: 0.875rem 1rem; 
+            border: 2px solid #e5e7eb; 
+            border-radius: 12px;
+            font-size: 1rem;
+            background: white;
+            transition: all 0.2s;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 16px;
+        }
+        select:focus, input:focus { 
+            outline: none; 
+            border-color: #3b82f6; 
+            box-shadow: 0 0 0 4px rgba(59,130,246,0.1);
+        }
+        .generate-btn { 
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white; 
+            border: none; 
+            padding: 1.125rem 2rem; 
+            border-radius: 12px;
+            font-size: 1.1rem; 
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            margin-top: 1rem;
+            box-shadow: 0 4px 14px rgba(59,130,246,0.3);
+        }
+        .generate-btn:hover:not(:disabled) { 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 25px rgba(59,130,246,0.4);
+        }
+        .generate-btn:disabled { 
+            opacity: 0.7; 
+            cursor: not-allowed; 
+            transform: none;
+        }
+        .collapsible-section { 
+            margin-top: 2rem;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .collapsible-header { 
+            padding: 1.25rem; 
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            color: #374151;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .collapsible-header:hover { background: #f3f4f6; }
+        .collapsible-content { 
+            max-height: 0; 
+            overflow: hidden; 
+            transition: max-height 0.3s ease;
+        }
+        .collapsible-content.open { max-height: 500px; }
+        .json-container { 
+            background: #1f2937; 
+            padding: 1.5rem; 
+            font-family: 'Monaco', monospace;
+            font-size: 0.85rem;
+            color: #f9fafb;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .output-card { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 2rem; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+            border: 1px solid #f1f5f9;
+        }
+        .confidence-badge { 
+            display: inline-flex; 
+            padding: 0.5rem 1rem; 
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white; 
+            border-radius: 50px; 
+            font-size: 0.875rem; 
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        .guidance-text { 
+            font-size: 1.1rem; 
+            line-height: 1.7; 
+            color: #1f2937;
+            margin-bottom: 2rem;
+        }
+        .citations-section { 
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 1.75rem;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+        .citations-title { 
+            font-size: 1.125rem; 
+            font-weight: 700; 
+            color: #1e293b;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .citation-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            padding: 1.25rem;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 4px solid #3b82f6;
+        }
+        .citation-info { 
+            flex: 1;
+            font-size: 0.95rem;
+        }
+        .citation-doc { font-weight: 600; color: #1e293b; margin-bottom: 0.25rem; }
+        .citation-loc { color: #6b7280; font-size: 0.9rem; }
+        .citation-link { 
+            background: #3b82f6; 
+            color: white; 
+            padding: 0.5rem 1rem; 
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .citation-link:hover { background: #2563eb; transform: translateY(-1px); }
+        .loading { 
+            display: none; 
+            text-align: center; 
+            padding: 3rem 2rem;
+            color: #6b7280;
+        }
+        .spinner { 
+            width: 48px; 
+            height: 48px; 
+            border: 4px solid #e5e7eb; 
+            border-top: 4px solid #3b82f6; 
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- LEFT PANEL: MCP Input -->
+        <div class="left-panel panel">
+            <div class="panel-header">
+                <span class="header-icon">📋</span>
+                Case Context (MCP Input)
+            </div>
+
+            <form id="caseForm">
+                <div class="form-group">
+                    <label class="form-label">Claim Type</label>
+                    <select id="claimType">
+                        <option value="Flood">Flood Damage</option>
+                        <option value="Fire">Fire Damage</option>
+                        <option value="Theft">Theft</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">State</label>
+                    <select id="state">
+                        <option value="Florida">Florida</option>
+                        <option value="Texas">Texas</option>
+                        <option value="California">California</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Policy Effective Date</label>
+                    <input type="date" id="policyDate" value="2025-12-01">
+                </div>
+
+                <button type="button" class="generate-btn" id="generateBtn" onclick="generateGuidance()">
+                    🚀 Generate MCP Guidance
+                </button>
+            </form>
+
+            <!-- MCP JSON Payload -->
+            <div class="collapsible-section" id="mcpSection">
+                <div class="collapsible-header" onclick="toggleMCP()">
+                    🔌 MCP Context Payload
+                    <span id="toggleIcon">▼</span>
+                </div>
+                <div class="collapsible-content" id="mcpContent">
+                    <div class="json-container" id="mcpJson">{}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: MCP Output -->
+        <div class="right-panel panel">
+            <div class="panel-header">
+                <span class="header-icon">🤖</span>
+                AI Compliance Guidance (MCP Output)
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div style="font-size: 1.1rem; margin-top: 1rem;">MCP agents analyzing case context...</div>
+            </div>
+
+            <div id="output" class="hidden">
+                <div class="output-card">
+                    <div class="confidence-badge" id="confidenceBadge">High confidence – verified sources</div>
+                    <div class="guidance-text" id="guidanceText"></div>
+                </div>
+
+                <div class="output-card">
+                    <div class="citations-section">
+                        <div class="citations-title">
+                            📄 Sources & Citations
+                        </div>
+                        <div id="citationsContainer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== MCP JSON STRUCTURE ====================
+        // This is the structured payload MCP sends to AI agents
+        // Real implementation: POST to MCP server endpoint
+        function generateMCPPayload() {
+            return {
+                "mcp_version": "1.0",
+                "context": {
+                    "appian_case": {
+                        "claim_type": document.getElementById('claimType').value,
+                        "state": document.getElementById('state').value,
+                        "policy_date": document.getElementById('policyDate').value,
+                        "timestamp": new Date().toISOString(),
+                        "source": "Appian Case Management Studio"
+                    }
+                },
+                "tools_requested": [
+                    "fetch_state_regulations",
+                    "parse_policy_documents",
+                    "compliance_risk_assessment",
+                    "version_check"
+                ],
+                "agent_swarm": [
+                    "ContextAgent",
+                    "RegulationHunter", 
+                    "RiskArbiter",
+                    "WorkflowAgent"
+                ],
+                "response_format": {
+                    "require_citations": true,
+                    "confidence_threshold": 0.9,
+                    "max_citations": 3
+                }
+            };
+        }
+
+        // ==================== MOCK AI RESPONSES ====================
+        // Simulates MCP agent swarm response based on case context
+        const mockResponses = {
+            "Flood": {
+                "Florida": {
+                    answer: `For <strong>Flood Damage</strong> claims in <strong>Florida</strong> with policy effective ${document.getElementById('policyDate').value || '2025-12-01'}:<br><br>
+✅ <strong>APPROVAL CRITERIA MET</strong><br>
+• Proof of continuous flood insurance required (verified)<br>
+• Certified adjuster assessment completed within 30 days<br>
+• No active moratorium (lifted Dec 1, 2025)<br><br>
+<strong>Recommended Action:</strong> Proceed to payment processing. All compliance requirements satisfied.`,
+                    confidence: "High confidence – verified sources",
+                    citations: [
+                        {
+                            doc: "Florida_Flood_Regulation_2025.pdf",
+                            page: 7,
+                            paragraph: "§4.2(a)",
+                            link: "#"
+                        },
+                        {
+                            doc: "Internal_SOP_Flood_Claims_v3.2.pdf",
+                            page: 12,
+                            paragraph: "Step 3.1 - Approval",
+                            link: "#"
+                        },
+                        {
+                            doc: "FL_Moratorium_Notice_Dec2025.pdf",
+                            page: 1,
+                            paragraph: "Notice #FL-2025-12-01",
+                            link: "#"
+                        }
+                    ]
+                }
+            },
+            "Fire": {
+                "Florida": {
+                    answer: `For <strong>Fire Damage</strong> claims in <strong>Florida</strong>:<br><br>
+✅ <strong>APPROVAL CRITERIA MET</strong><br>
+• Fire investigation report required<br>
+• Replacement cost valuation completed<br>
+• No exclusions apply<br><br>
+<strong>Recommended Action:</strong> Approve claim. All documentation verified.`,
+                    confidence: "High confidence – verified sources",
+                    citations: [
+                        {
+                            doc: "Fire_Claims_Procedure_2025.pdf",
+                            page: 5,
+                            paragraph: "§2.1(b)",
+                            link: "#"
+                        },
+                        {
+                            doc: "Claim_Processing_Guide.pdf",
+                            page: 8,
+                            paragraph: "Section 3",
+                            link: "#"
+                        }
+                    ]
+                }
+            }
+        };
+
+        // ==================== MAIN DEMO FUNCTION ====================
+        function generateGuidance() {
+            const btn = document.getElementById('generateBtn');
+            const loading = document.getElementById('loading');
+            const output = document.getElementById('output');
+
+            // Show loading state
+            btn.disabled = true;
+            btn.innerHTML = '⏳ MCP Agents Analyzing...';
+            loading.style.display = 'block';
+            output.classList.add('hidden');
+
+            // Generate & display MCP payload
+            const mcpPayload = generateMCPPayload();
+            document.getElementById('mcpJson').textContent = JSON.stringify(mcpPayload, null, 2);
+            document.getElementById('mcpContent').classList.add('open');
+
+            // Simulate MCP -> Agent Swarm -> Response (2.5s delay)
+            setTimeout(() => {
+                const claimType = document.getElementById('claimType').value;
+                const state = document.getElementById('state').value;
+                
+                // Get mock response (REAL: await fetch('/mcp/compliance'))
+                const response = mockResponses[claimType]?.[state] || {
+                    answer: "No specific guidance available for this combination. Please verify case details.",
+                    confidence: "Low confidence – limited sources",
+                    citations: []
+                };
+
+                // Display results
+                document.getElementById('confidenceBadge').textContent = response.confidence;
+                document.getElementById('guidanceText').innerHTML = response.answer;
+                
+                const citationsContainer = document.getElementById('citationsContainer');
+                citationsContainer.innerHTML = '';
+                
+                response.citations.forEach(citation => {
+                    const citationEl = document.createElement('div');
+                    citationEl.className = 'citation-item';
+                    citationEl.innerHTML = `
+                        <div class="citation-info">
+                            <div class="citation-doc">${citation.doc}</div>
+                            <div class="citation-loc">Page ${citation.page} • ${citation.paragraph}</div>
+                        </div>
+                        <button class="citation-link" onclick="alert('In production, this would open: ${citation.link}')">View Source</button>
+                    `;
+                    citationsContainer.appendChild(citationEl);
+                });
+
+                // Reset UI
+                loading.style.display = 'none';
+                output.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerHTML = '🚀 Generate MCP Guidance';
+            }, 2500);
+        }
+
+        // ==================== UI HELPERS ====================
+        function toggleMCP() {
+            const content = document.getElementById('mcpContent');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            content.classList.toggle('open');
+            toggleIcon.textContent = content.classList.contains('open') ? '▲' : '▼';
+        }
+
+        // Auto-update MCP preview on form change
+        document.querySelectorAll('#caseForm input, #caseForm select').forEach(el => {
+            el.addEventListener('change', () => {
+                document.getElementById('mcpJson').textContent = JSON.stringify(generateMCPPayload(), null, 2);
+            });
+        });
+    </script>
+</body>
+</html>
